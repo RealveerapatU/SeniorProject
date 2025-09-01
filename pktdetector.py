@@ -2,7 +2,8 @@ import pyshark
 import datetime
 import pandas as pd
 capture = pyshark.LiveCapture(interface='en1')
-# Define lists to store IP header fields
+
+
 class Statistics():
     @staticmethod
     def Logs(req_port,src_ip,dst_ip,pkt_time):
@@ -22,6 +23,10 @@ class Security():
      read = pd.read_csv('log.csv', names=['Day', 'Time', 'Source IP', 'Destination IP', 'Destination Port'])
      df = pd.DataFrame(read)
      print(df)
+     print("Data Length:", len(df['Day']))
+     
+             
+     
 
     @staticmethod
     def SyncFlooding():
