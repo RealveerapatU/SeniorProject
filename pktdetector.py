@@ -18,22 +18,33 @@ class Statistics():
 
 class Security():
     syncflooding=False
+
     @staticmethod 
     def RequestStatistics():    
      read = pd.read_csv('log.csv', names=['Day', 'Time', 'Source IP', 'Destination IP', 'Destination Port'])
      df = pd.DataFrame(read)
-     print(df)
-     print("Data Length:", len(df['Day']))
+    #  print(df)
+     Security.DdosDetection(df['Day'],df['Source IP'],df['Destination IP'],df['Destination Port'])
+     
+     
+    
+    @staticmethod 
+    def DdosDetection(Day,Source_IP,Destination_IP,Destination_Port):
+      print(Day.value_counts())
+   
+          
+
+
      
              
      
 
-    @staticmethod
-    def SyncFlooding():
-        print ("Detecting SYN Flooding Attack...")
-    @staticmethod
-    def MeasureBandwidth():
-        print ("Measuring Bandwidth...")
+    # @staticmethod
+    # def SyncFlooding():
+    #     print ("Detecting SYN Flooding Attack...")
+    # @staticmethod
+    # def MeasureBandwidth():
+    #     print ("Measuring Bandwidth...")
 
 class Info:
     @staticmethod
@@ -92,7 +103,7 @@ class Info:
                         packet_time = packet.sniff_time
                         packet_timestamp = packet.sniff_timestamp
 
-                        # เก็บค่า TCP
+                        
                         tcp_srcport.append(source_port)
                         tcp_dstport.append(destination_port)
                         tcp_seq.append(packet.tcp.seq)
