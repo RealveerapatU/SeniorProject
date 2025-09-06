@@ -73,6 +73,20 @@ class Security():
         if(Security.syncflooding and abnormaltraffic):
             print("Alert: Both SYN Flood and Abnormal Traffic Detected!")
 
+
+class BlockinhIP():
+    @staticmethod
+    def block_ip(ip_address):
+        import os
+        command = f"sudo pfctl -t blocked_ips -T add {ip_address}"
+        os.system(command)
+        print(f"Blocked IP: {ip_address}")
+
+    def unblock_ip(ip_address):
+        import os
+        command = f"sudo pfctl -t blocked_ips -T delete {ip_address}"
+        os.system(command)
+        print(f"Unblocked IP: {ip_address}")   
 class Info:
     @staticmethod
     def packetdetector():
