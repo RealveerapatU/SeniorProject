@@ -1,121 +1,95 @@
 import pyshark
 import datetime
 import pandas as pd
-capture = pyshark.LiveCapture(interface='en1')
 
+capture = pyshark.LiveCapture(interface='en1')
 
 class Statistics():
     @staticmethod
-    def Logs(req_port,src_ip,dst_ip,pkt_time):
+    def Logs(req_port, src_ip, dst_ip, pkt_time, syn_flag, ack_flag):
         current_datetime = datetime.datetime.today()
         day_of_week = current_datetime.strftime('%A')
-        with open('log.csv','a')as f:
-            f.write(f"{day_of_week}"+","+f"{pkt_time}"+","+f"{src_ip}"+","+
-                    f"{dst_ip}"+","+
-                    f"{req_port}"+"\n")
-        # print("Logging...")
+        with open('log.csv', 'a') as f:
+            f.write(f"{day_of_week},{pkt_time},{src_ip},{dst_ip},{req_port},{syn_flag},{ack_flag}\n")
         Security.RequestStatistics()
 
 class Security():
-    syncflooding=False
+    syncflooding = False
+    abnormaltraffic = False
 
-    @staticmethod 
-    def RequestStatistics():    
-     read = pd.read_csv('log.csv', names=['Day', 'Time', 'Source IP', 'Destination IP', 'Destination Port'])
-     df = pd.DataFrame(read)
-    #  print(df)
-     Security.DdosDetection(df['Day'],df['Source IP'],df['Destination IP'],df['Destination Port'])
-     
-     
-    
-    @staticmethod 
-    def DdosDetection(Day,Source_IP,Destination_IP,Destination_Port):
-      print(Day.value_counts())
-   
-          
+    @staticmethod
+    def RequestStatistics():
+        read = pd.read_csv('log.csv', names=['Day', 'Time', 'Source IP', 'Destination IP', 'Destination Port', 'SYN Flag', 'ACK Flag'])
+        df = pd.DataFrame(read)
+        Security.DdosDetection(df['Day'], df['Time'], df['Source IP'], df['Destination IP'], df['Destination Port'], df)
 
+    @staticmethod
+    def DdosDetection(Day, Time, Source_IP, Destination_IP, Destination_Port, df):
+        today = datetime.datetime.today().strftime('%A')
+        today_date = datetime.datetime.today().date()
 
-     
-             
-     
+        syncattack_ip=0
 
-    # @staticmethod
-    # def SyncFlooding():
-    #     print ("Detecting SYN Flooding Attack...")
-    # @staticmethod
-    # def MeasureBandwidth():
-    #     print ("Measuring Bandwidth...")
+        day = Day.tolist()
+        time = Time.tolist()
+
+        normal_days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday']
+        weekend_days = ['Friday', 'Saturday', 'Sunday']
+
+        if today in weekend_days:
+            weekend_universe = sum(d in weekend_days for d in day)
+            req_hour = weekend_universe / 24
+        else:
+            normal_universe = sum(d in normal_days for d in day)
+            req_hour = normal_universe / 24
+
+        today_requests = sum(
+            datetime.datetime.strptime(str(t), '%Y-%m-%d %H:%M:%S.%f').date() == today_date
+            if '.' in str(t)
+            else datetime.datetime.strptime(str(t), '%Y-%m-%d %H:%M:%S').date() == today_date
+            for t in time
+        )
+
+        print("Normal Request per hour:", req_hour)
+        print("Total requests today:", today_requests)
+
+        if (today_requests / 24) > req_hour * 10:
+            print("Possible DDoS Attack Detected!")
+            abnormaltraffic = True
+
+        syn_counts = df[df['SYN Flag'] == 1]['Source IP'].value_counts()
+        threshold = 100
+        attackers = syn_counts[syn_counts > threshold]
+        if not attackers.empty:
+            Security.syncflooding = True
+            print("Possible SYN Flood Attack Detected from IP(s):")
+            for ip in attackers.index:
+                syncattack_ip=ip
+                print(syncattack_ip)
+                
+        else:
+            print("No SYN Flood Attack Detected.")
+
+        if(Security.syncflooding and abnormaltraffic):
+            print("Alert: Both SYN Flood and Abnormal Traffic Detected!")
 
 class Info:
     @staticmethod
     def packetdetector():
-        ipversion=[]
-        ipheaders_length=[]
-        iptos=[]
-        ipipidentification=[]
-        ipflags=[]
-        ipfragment_offset=[]
-        ipttl=[]
-        ipprotocol=[]
-        ipheader_checksum=[]
-        ipsource_address=[]
-        ipdestination_address=[]
-        # เก็บ TCP fields
-        tcp_srcport = []
-        tcp_dstport = []
-        tcp_seq = []
-        tcp_ack = []
-        tcp_len = []
-        tcp_window = []
-        tcp_flags = []
-        tcp_flag_syn = []
-        tcp_flag_ack = []
-        tcp_flag_fin = []
-        tcp_flag_rst = []
         try:
             for packet in capture.sniff_continuously():
                 try:
-                   
-
-                        # print(f"[TCP] {source_address}:{source_port} -> {destination_address}:{destination_port}, "
-                        #       f"SEQ={packet.tcp.seq}, ACK={packet.tcp.ack}, LEN={packet.tcp.len}, "
-                        #       f"Flags(SYN={packet.tcp.flags_syn}, ACK={packet.tcp.flags_ack}, FIN={packet.tcp.flags_fin}, RST={packet.tcp.flags_reset}), "
-                        #       f"Time={packet_time}"   
-                    if 'IP' in packet:
-                        ipversion.append(packet.ip.version)
-                        ipheaders_length.append(packet.ip.hdr_len)
-                        iptos.append(packet.ip.dsfield)
-                        ipipidentification.append(packet.ip.id)
-                        ipflags.append(packet.ip.flags)
-                        ipfragment_offset.append(packet.ip.frag_offset)
-                        ipttl.append(packet.ip.ttl)
-                        ipprotocol.append(packet.ip.proto)
-                        ipheader_checksum.append(packet.ip.checksum)
-                        ipsource_address.append(packet.ip.src)
-                        ipdestination_address.append(packet.ip.dst)
-                       
                     if 'TCP' in packet:
-                        protocol = packet.transport_layer
                         source_address = packet.ip.src
                         source_port = packet.tcp.srcport
                         destination_address = packet.ip.dst
-                        destination_port = packet.tcp.dstport 
+                        destination_port = packet.tcp.dstport
                         packet_time = packet.sniff_time
-                        packet_timestamp = packet.sniff_timestamp
 
-                        
-                        tcp_srcport.append(source_port)
-                        tcp_dstport.append(destination_port)
-                        tcp_seq.append(packet.tcp.seq)
-                        tcp_ack.append(packet.tcp.ack)
-                        tcp_len.append(packet.tcp.len)
-                        tcp_window.append(packet.tcp.window_size)
-                        tcp_flags.append(packet.tcp.flags)
-                        tcp_flag_syn.append(packet.tcp.flags_syn)
-                        tcp_flag_ack.append(packet.tcp.flags_ack)
-                        tcp_flag_fin.append(packet.tcp.flags_fin)
-                        tcp_flag_rst.append(packet.tcp.flags_reset)
-                        Statistics.Logs(destination_port,source_address,destination_address,packet_time)
+                        syn_flag = 1 if str(packet.tcp.flags_syn).lower() == 'true' else 0
+                        ack_flag = 1 if str(packet.tcp.flags_ack).lower() == 'true' else 0
+
+                        Statistics.Logs(destination_port, source_address, destination_address, packet_time, syn_flag, ack_flag)
                 except AttributeError:
                     pass
         except (KeyboardInterrupt, EOFError):
