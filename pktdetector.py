@@ -3,7 +3,7 @@ import pyshark
 import datetime
 import pandas as pd
 import os
-capture = pyshark.LiveCapture(interface='en1')
+capture = pyshark.LiveCapture(interface='eth0')
 
 class Statistics():
     @staticmethod
@@ -78,7 +78,7 @@ class Security():
     @staticmethod
     def PortScanDetect(Day, Time, Source_IP, Destination_IP, Destination_Port, df):
         portscan_ip = 0
-        portscan_threshold = 10
+        portscan_threshold = 5
 
         portscan_counts = df.groupby('Source IP')['Destination Port'].nunique()
         potential_portscanners = portscan_counts[portscan_counts > portscan_threshold]
