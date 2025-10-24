@@ -74,6 +74,7 @@ class Security():
 
         if(Security.syncflooding and Security.abnormaltraffic):
             print("Alert: Both SYN Flood and Abnormal Traffic Detected!")
+            BlockingIP().block_ip(syncattack_ip)
     @staticmethod
     def PortScanDetect(Day, Time, Source_IP, Destination_IP, Destination_Port, df):
         portscan_ip = 0
@@ -87,6 +88,7 @@ class Security():
             for ip in potential_portscanners.index:
                 portscan_ip = ip
                 print(portscan_ip)
+                BlockingIP().block_ip(portscan_ip)
         else:
             print("No Port Scanning Detected.")
 

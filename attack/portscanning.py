@@ -7,3 +7,5 @@ for port in range(1, 65536):
         s.settimeout(0.5)  # เพิ่ม timeout
         if not s.connect_ex((ip, port)):
             print(f"Port {port} is open")
+        else:
+            print(f"Port {port} is closed")
