@@ -1,3 +1,4 @@
+# source .venv/bin/activate
 import pyshark
 import datetime
 import pandas as pd
@@ -22,6 +23,7 @@ class Security():
         read = pd.read_csv('log.csv', names=['Day', 'Time', 'Source IP', 'Destination IP', 'Destination Port', 'SYN Flag', 'ACK Flag'])
         df = pd.DataFrame(read)
         Security.DdosDetection(df['Day'], df['Time'], df['Source IP'], df['Destination IP'], df['Destination Port'], df)
+        Security.PortScanDetect(df['Day'], df['Time'], df['Source IP'], df['Destination IP'], df['Destination Port'], df)
 
     @staticmethod
     def DdosDetection(Day, Time, Source_IP, Destination_IP, Destination_Port, df):
@@ -55,7 +57,7 @@ class Security():
 
         if (today_requests / 24) > req_hour * 10:
             print("Possible DDoS Attack Detected!")
-            abnormaltraffic = True
+            Security.abnormaltraffic = True
 
         syn_counts = df[df['SYN Flag'] == 1]['Source IP'].value_counts()
         threshold = 100
@@ -70,23 +72,40 @@ class Security():
         else:
             print("No SYN Flood Attack Detected.")
 
-        if(Security.syncflooding and abnormaltraffic):
+        if(Security.syncflooding and Security.abnormaltraffic):
             print("Alert: Both SYN Flood and Abnormal Traffic Detected!")
+    @staticmethod
+    def PortScanDetect(Day, Time, Source_IP, Destination_IP, Destination_Port, df):
+        portscan_ip = 0
+        portscan_threshold = 50
+
+        portscan_counts = df.groupby('Source IP')['Destination Port'].nunique()
+        potential_portscanners = portscan_counts[portscan_counts > portscan_threshold]
+
+        if not potential_portscanners.empty:
+            print("Possible Port Scanning Detected from IP(s):")
+            for ip in potential_portscanners.index:
+                portscan_ip = ip
+                print(portscan_ip)
+        else:
+            print("No Port Scanning Detected.")
 
 
-class BlockinhIP():
+
+class BlockingIP:
     @staticmethod
     def block_ip(ip_address):
         import os
-        command = f"sudo pfctl -t blocked_ips -T add {ip_address}"
+        command = f"sudo iptables -A INPUT -s {ip_address} -j DROP"
         os.system(command)
         print(f"Blocked IP: {ip_address}")
 
+    @staticmethod
     def unblock_ip(ip_address):
         import os
-        command = f"sudo pfctl -t blocked_ips -T delete {ip_address}"
+        command = f"sudo iptables -D INPUT -s {ip_address} -j DROP"
         os.system(command)
-        print(f"Unblocked IP: {ip_address}")   
+        print(f"Unblocked IP: {ip_address}")
 class Info:
     @staticmethod
     def packetdetector():
