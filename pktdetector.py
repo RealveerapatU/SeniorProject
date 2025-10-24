@@ -103,13 +103,7 @@ class BlockingIP:
       os.system(command_input)
       os.system(command_output)
       print(f"Blocked IP: {ip_address}")
-
-    @staticmethod
-    def unblock_ip(ip_address):
-      
-        command = f"sudo iptables -D INPUT -s {ip_address} -j DROP"
-        os.system(command)
-        print(f"Unblocked IP: {ip_address}")
+     
 class Info:
     @staticmethod
     def packetdetector():
