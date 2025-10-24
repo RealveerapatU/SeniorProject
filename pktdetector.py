@@ -2,7 +2,7 @@
 import pyshark
 import datetime
 import pandas as pd
-
+import os
 capture = pyshark.LiveCapture(interface='en1')
 
 class Statistics():
@@ -78,7 +78,7 @@ class Security():
     @staticmethod
     def PortScanDetect(Day, Time, Source_IP, Destination_IP, Destination_Port, df):
         portscan_ip = 0
-        portscan_threshold = 50
+        portscan_threshold = 10
 
         portscan_counts = df.groupby('Source IP')['Destination Port'].nunique()
         potential_portscanners = portscan_counts[portscan_counts > portscan_threshold]
@@ -97,14 +97,16 @@ class Security():
 class BlockingIP:
     @staticmethod
     def block_ip(ip_address):
-        import os
-        command = f"sudo iptables -A INPUT -s {ip_address} -j DROP"
-        os.system(command)
-        print(f"Blocked IP: {ip_address}")
+       
+      command_input = f"sudo iptables -I INPUT -s {ip_address} -j DROP"
+      command_output = f"sudo iptables -I OUTPUT -d {ip_address} -j DROP"
+      os.system(command_input)
+      os.system(command_output)
+      print(f"Blocked IP: {ip_address}")
 
     @staticmethod
     def unblock_ip(ip_address):
-        import os
+      
         command = f"sudo iptables -D INPUT -s {ip_address} -j DROP"
         os.system(command)
         print(f"Unblocked IP: {ip_address}")
