@@ -26,24 +26,25 @@ class Statistics():
 
 class Security():
     
-#     @staticmethod
-#     def DosDetect():
-#         today = datetime.datetime.today()
-#         myipaddress = netifaces.ifaddresses('en1')[netifaces.AF_INET][0]['addr']
-#         df = pd.read_csv('log.csv')
-#         baseline_weekend=df[df['Day'].isin(['Saturday', 'Sunday'])]
-#         baseline_weekday=df[df['Day'].isin(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'])]
+    @staticmethod
+    def DosDetect():
+        today = datetime.datetime.today()
+        myipaddress = netifaces.ifaddresses('en1')[netifaces.AF_INET][0]['addr']
+        df = pd.read_csv('log.csv')
+        baseline_weekend=df[df['Day'].isin(['Saturday', 'Sunday'])]
+        baseline_weekday=df[df['Day'].isin(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'])]
 
-#         if(today.strftime('%A') in ['Saturday', 'Sunday']):
-#             df_http = df[(df['Destination Port']==80) | (df['Destination Port']==3000)]
-#             byip = df_http.groupby('Source IP')
-#             mean_requests = byip.size().mean()
-#             http_requestsperip = df_http.groupby('Source IP').size()
-#             for ip, request_count in http_requestsperip.items():
-#                 if request_count > mean_requests * 3 and ip != myipaddress:
-#                     blocklist = pd.read_csv('Block.csv')
-#                     if ip not in blocklist['Source IP'].values:
-#                         Iptables.block_ip(ip)
+        if(today.strftime('%A') in ['Saturday', 'Sunday']):
+            df_http = df[(df['Destination Port']==80) | (df['Destination Port']==3000)]
+            byip = df_http.groupby('Source IP')
+            mean_requests = byip.size().mean()
+            http_requestsperip = df_http.groupby('Source IP').size()
+            for ip, request_count in http_requestsperip.items():
+                if request_count > mean_requests * 3 and ip != myipaddress:
+                    blocklist = pd.read_csv('Block.csv')
+                    if ip not in blocklist['Source IP'].values:
+                        print("DDoS detected from:", ip)
+                        Iptables.block_ip(ip)
 
     @staticmethod
     def PortScanDetect():
