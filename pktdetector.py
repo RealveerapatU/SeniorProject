@@ -4,8 +4,8 @@ import pyshark
 import datetime
 import pandas as pd
 import os
-
-capture = pyshark.LiveCapture(interface='en1')
+inter= 'en1'
+capture = pyshark.LiveCapture(interface=inter)
 
 class Statistics():
     @staticmethod
@@ -44,45 +44,10 @@ class Security():
 #                     blocklist = pd.read_csv('Block.csv')
 #                     if ip not in blocklist['Source IP'].values:
 #                         Iptables.block_ip(ip)
-         
-#             df_syn = df[df['SYN Flag'] == 1]
-#             byip_syn = df_syn.groupby('Source IP')
-#             syn_requestsperip = byip_syn.size()
-#             mean_syn_requests = byip_syn.size().mean()
-#             print("Mean SYN Requests (Weekend):", mean_syn_requests)
-#             for ip, syn_count in syn_requestsperip.items():
-#                 if syn_count > mean_syn_requests * 3 and ip != myipaddress:
-#                     print("SYN Flooding:", ip)
-#                     blocklist = pd.read_csv('Block.csv')
-#                     if ip not in blocklist['Source IP'].values:
-#                         Iptables.block_ip(ip)
-
-#         if(today.strftime('%A') in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']):
-#             df_http = df[(df['Destination Port']==80) | (df['Destination Port']==3000)]
-#             byip = df_http.groupby('Source IP')
-#             mean_requests = byip.size().mean()
-#             http_requestsperip = df_http.groupby('Source IP').size()
-#             for ip, request_count in http_requestsperip.items():
-#                 if request_count > mean_requests * 2 and ip != myipaddress:
-#                     print("HTTP Flooding:", ip)
-#                     blocklist = pd.read_csv('Block.csv')
-#                     if ip not in blocklist['Source IP'].values:
-#                         Iptables.block_ip(ip)
-            
-#             df_syn = df[df['SYN Flag'] == 1]
-#             byip_syn = df_syn.groupby('Source IP')
-#             syn_requestsperip = byip_syn.size()
-#             mean_syn_requests = byip_syn.size().mean()
-#             for ip, syn_count in syn_requestsperip.items():
-#                 if syn_count > mean_syn_requests * 3 and ip != myipaddress:
-#                     print("SYN Flooding:", ip)
-#                     blocklist = pd.read_csv('Block.csv')
-#                     if ip not in blocklist['Source IP'].values:
-#                         Iptables.block_ip(ip)
 
     @staticmethod
     def PortScanDetect():
-        myipaddress = netifaces.ifaddresses('en1')[netifaces.AF_INET][0]['addr']
+        myipaddress = netifaces.ifaddresses(inter)[netifaces.AF_INET][0]['addr']
         df = pd.read_csv('log.csv')
         df = df[['Source IP', 'Destination Port']]
         byip = df.groupby('Source IP')
@@ -101,7 +66,9 @@ class Security():
 
         for ip, port in request_ports.items():
             if port > threshold and ip !=myipaddress:
-                print("Port scanning detected from:", ip)
+                if ip not in dfportblock['Source IP'].values:
+                    Iptables.block_ip(ip)
+                    print("Port scanning detected from:", ip)
                
 
 class Iptables:
