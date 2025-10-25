@@ -9,22 +9,22 @@ capture = pyshark.LiveCapture(interface='en1')
 
 class Statistics():
     @staticmethod
-#     def Logs(req_port, src_ip, dst_ip, pkt_time, syn_flag, ack_flag):
-#         current_datetime = datetime.datetime.today()
-#         day_of_week = current_datetime.strftime('%A')
-#         log_file = 'log.csv'
+    def Logs(req_port, src_ip, dst_ip, pkt_time, syn_flag, ack_flag):
+        current_datetime = datetime.datetime.today()
+        day_of_week = current_datetime.strftime('%A')
+        log_file = 'log.csv'
 
-#         if not os.path.exists(log_file):
-#             with open(log_file, 'w') as f:
-#                 f.write("Day,Time,Source IP,Destination IP,Destination Port,SYN Flag,ACK Flag\n")
+        if not os.path.exists(log_file):
+            with open(log_file, 'w') as f:
+                f.write("Day,Time,Source IP,Destination IP,Destination Port,SYN Flag,ACK Flag\n")
 
-#         with open(log_file, 'a') as f:
-#             f.write(f"{day_of_week},{pkt_time},{src_ip},{dst_ip},{req_port},{syn_flag},{ack_flag}\n")
+        with open(log_file, 'a') as f:
+            f.write(f"{day_of_week},{pkt_time},{src_ip},{dst_ip},{req_port},{syn_flag},{ack_flag}\n")
 
-#         Security.PortScanDetect()
-#         Security.DosDetect()
+        Security.PortScanDetect()
+        # Security.DosDetect()
 
-# class Security():
+class Security():
     
 #     @staticmethod
 #     def DosDetect():
