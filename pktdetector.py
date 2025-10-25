@@ -1,9 +1,10 @@
 # source .venv/bin/activate
+import netifaces
 import pyshark
 import datetime
 import pandas as pd
 import os
-capture = pyshark.LiveCapture(interface='eth0')
+capture = pyshark.LiveCapture(interface='en1')
 
 class Statistics():
     @staticmethod
@@ -54,9 +55,11 @@ class Security():
 
         print("Normal Request per hour:", req_hour)
         print("Total requests today:", today_requests)
-
-        if (today_requests / 24) > req_hour * 10:
-            print("Possible DDoS Attack Detected!")
+        iface = 'en1'
+        myip = netifaces.ifaddresses(iface)[netifaces.AF_INET][0]['addr']
+        
+        if (today_requests / 24) > req_hour * 100:
+            
             Security.abnormaltraffic = True
 
         syn_counts = df[df['SYN Flag'] == 1]['Source IP'].value_counts()
@@ -64,10 +67,15 @@ class Security():
         attackers = syn_counts[syn_counts > threshold]
         if not attackers.empty:
             Security.syncflooding = True
-            print("Possible SYN Flood Attack Detected from IP(s):")
             for ip in attackers.index:
                 syncattack_ip=ip
-                print(syncattack_ip)
+                if(syncattack_ip != myip):
+                    print("Possible Dos attack form :", syncattack_ip)
+                    BlockingIP().block_ip(syncattack_ip)
+                    print(syncattack_ip,"Has been neutralized.")
+                
+                    
+                
                 
         else:
             print("No SYN Flood Attack Detected.")
@@ -78,17 +86,19 @@ class Security():
     @staticmethod
     def PortScanDetect(Day, Time, Source_IP, Destination_IP, Destination_Port, df):
         portscan_ip = 0
-        portscan_threshold = 5
+        portscan_threshold = 50
 
         portscan_counts = df.groupby('Source IP')['Destination Port'].nunique()
         potential_portscanners = portscan_counts[portscan_counts > portscan_threshold]
-
+        iface = 'en1'
+        myip = netifaces.ifaddresses(iface)[netifaces.AF_INET][0]['addr']
         if not potential_portscanners.empty:
-            print("Possible Port Scanning Detected from IP(s):")
             for ip in potential_portscanners.index:
-                portscan_ip = ip
-                print(portscan_ip)
-                BlockingIP().block_ip(portscan_ip)
+                if(ip != myip):
+                 portscan_ip = ip
+                 print(portscan_ip)
+                 print("Possible Port Scanning Detected from IP(s):",portscan_ip)
+                 BlockingIP().block_ip(portscan_ip)
         else:
             print("No Port Scanning Detected.")
 
