@@ -1,0 +1,6 @@
+sudo iptables -L INPUT -n --line-numbers
+sudo iptables -L OUTPUT -n --line-numbers
+sudo iptables -D INPUT -s 171.102.216.72 -j DROP
+sudo iptables -L -n
+sudo /home/veerapat/myenv/bin/python3 pktdetector.py
+49.237.201.135 \  49.237.201.135    49.228.88.37  

@@ -11,114 +11,88 @@ class Statistics():
     def Logs(req_port, src_ip, dst_ip, pkt_time, syn_flag, ack_flag):
         current_datetime = datetime.datetime.today()
         day_of_week = current_datetime.strftime('%A')
-        with open('log.csv', 'a') as f:
+        log_file = 'log.csv'
+
+       
+        if not os.path.exists(log_file):
+            with open(log_file, 'w') as f:
+                f.write("Day,Time,Source IP,Destination IP,Destination Port,SYN Flag,ACK Flag\n")
+
+        # เขียนข้อมูลต่อท้าย
+        with open(log_file, 'a') as f:
             f.write(f"{day_of_week},{pkt_time},{src_ip},{dst_ip},{req_port},{syn_flag},{ack_flag}\n")
-        Security.RequestStatistics()
+
+        # print(f"Logged packet: {src_ip} -> {dst_ip} port {req_port}")
+        Security.PortScanDetect()
 
 class Security():
-    syncflooding = False
-    abnormaltraffic = False
-
     @staticmethod
-    def RequestStatistics():
-        read = pd.read_csv('log.csv', names=['Day', 'Time', 'Source IP', 'Destination IP', 'Destination Port', 'SYN Flag', 'ACK Flag'])
-        df = pd.DataFrame(read)
-        Security.DdosDetection(df['Day'], df['Time'], df['Source IP'], df['Destination IP'], df['Destination Port'], df)
-        Security.PortScanDetect(df['Day'], df['Time'], df['Source IP'], df['Destination IP'], df['Destination Port'], df)
+    def PortScanDetect():
+        df = pd.read_csv('log.csv')
+        df = df[['Source IP', 'Destination Port']]
+        byip = df.groupby('Source IP')
+        request_ports = byip['Destination Port'].nunique()
+        ## For real use
+        # threshold = 300
+        ##For testing purpose set 15
+        threshold = 1
 
-    @staticmethod
-    def DdosDetection(Day, Time, Source_IP, Destination_IP, Destination_Port, df):
-        today = datetime.datetime.today().strftime('%A')
-        today_date = datetime.datetime.today().date()
+        log_file = 'Block.csv'
+        if not os.path.exists(log_file):
+            with open(log_file, 'w') as f:
+                f.write("Source IP\n")
 
-        syncattack_ip=0
+        dfportblock = pd.read_csv(log_file)
 
-        day = Day.tolist()
-        time = Time.tolist()
-
-        normal_days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday']
-        weekend_days = ['Friday', 'Saturday', 'Sunday']
-
-        if today in weekend_days:
-            weekend_universe = sum(d in weekend_days for d in day)
-            req_hour = weekend_universe / 24
-        else:
-            normal_universe = sum(d in normal_days for d in day)
-            req_hour = normal_universe / 24
-
-        today_requests = sum(
-            datetime.datetime.strptime(str(t), '%Y-%m-%d %H:%M:%S.%f').date() == today_date
-            if '.' in str(t)
-            else datetime.datetime.strptime(str(t), '%Y-%m-%d %H:%M:%S').date() == today_date
-            for t in time
-        )
-
-        print("Normal Request per hour:", req_hour)
-        print("Total requests today:", today_requests)
-        iface = 'en1'
-        myip = netifaces.ifaddresses(iface)[netifaces.AF_INET][0]['addr']
-        
-        if (today_requests / 24) > req_hour * 100:
-            
-            Security.abnormaltraffic = True
-
-        syn_counts = df[df['SYN Flag'] == 1]['Source IP'].value_counts()
-        threshold = 100
-        attackers = syn_counts[syn_counts > threshold]
-        if not attackers.empty:
-            Security.syncflooding = True
-            for ip in attackers.index:
-                syncattack_ip=ip
-                if(syncattack_ip != myip):
-                    print("Possible Dos attack form :", syncattack_ip)
-                    BlockingIP().block_ip(syncattack_ip)
-                    print(syncattack_ip,"Has been neutralized.")
-                
+        for ip, port in request_ports.items():
+            if port > threshold:
+                if ip not in dfportblock['Source IP'].values:
+                    print("Port scanning detected from:", ip)
+                    Iptables.block_ip(ip)
                     
-                
-                
-        else:
-            print("No SYN Flood Attack Detected.")
+               
 
-        if(Security.syncflooding and Security.abnormaltraffic):
-            print("Alert: Both SYN Flood and Abnormal Traffic Detected!")
-            BlockingIP().block_ip(syncattack_ip)
-    @staticmethod
-    def PortScanDetect(Day, Time, Source_IP, Destination_IP, Destination_Port, df):
-        portscan_ip = 0
-        portscan_threshold = 50
-
-        portscan_counts = df.groupby('Source IP')['Destination Port'].nunique()
-        potential_portscanners = portscan_counts[portscan_counts > portscan_threshold]
-        iface = 'en1'
-        myip = netifaces.ifaddresses(iface)[netifaces.AF_INET][0]['addr']
-        if not potential_portscanners.empty:
-            for ip in potential_portscanners.index:
-                if(ip != myip):
-                 portscan_ip = ip
-                 print(portscan_ip)
-                 print("Possible Port Scanning Detected from IP(s):",portscan_ip)
-                 BlockingIP().block_ip(portscan_ip)
-        else:
-            print("No Port Scanning Detected.")
-
-
-
-class BlockingIP:
+ ####################################################################               
+class Iptables:
     @staticmethod
     def block_ip(ip_address):
-       
-      command_input = f"sudo iptables -I INPUT -s {ip_address} -j DROP"
-      command_output = f"sudo iptables -I OUTPUT -d {ip_address} -j DROP"
-      os.system(command_input)
-      os.system(command_output)
-      print(f"Blocked IP: {ip_address}")
-     
+        # command_input = f"sudo iptables -I INPUT -s {ip_address} -j DROP"
+        # command_output = f"sudo iptables -I OUTPUT -d {ip_address} -j DROP"
+        # os.system(command_input)
+        # os.system(command_output)
+        log_file = 'Block.csv'
+        if not os.path.exists(log_file):
+            with open(log_file, 'w') as f:
+                f.write("Source IP")
+
+        with open(log_file, 'a') as f:
+            f.write(f"{ip_address}\n")
+            
+        print(f"Blocked IP: {ip_address}")
+
+    @staticmethod
+    def unblock_ip(ip_address):
+        chains = ["INPUT", "OUTPUT"]
+        table = "filter"
+        for chain in chains:
+            result = os.popen(f"sudo iptables -t {table} -L {chain} --line-numbers -n | grep {ip_address}").read()
+            if result:
+                lines = result.strip().split('\n')
+                nums = [int(line.split()[0]) for line in lines]
+                for num in sorted(nums, reverse=True):
+                    os.system(f"sudo iptables -t {table} -D {chain} {num}")
+                    
+                print(f"Unblocked all rules for IP {ip_address} in chain {chain}")
+
+###########################################################################     
 class Info:
     @staticmethod
     def packetdetector():
-        try:
-            for packet in capture.sniff_continuously():
+        print("Host Intruder detection and response system.Select mode to continue \n1.Packet Detector\n2.Unblock IP\n3.Statistics Analysis")
+        input_mode = input("Enter mode number: ")
+        if(input_mode =='1'):
+            try:
+             for packet in capture.sniff_continuously():
                 try:
                     if 'TCP' in packet:
                         source_address = packet.ip.src
@@ -133,8 +107,10 @@ class Info:
                         Statistics.Logs(destination_port, source_address, destination_address, packet_time, syn_flag, ack_flag)
                 except AttributeError:
                     pass
-        except (KeyboardInterrupt, EOFError):
-            print("\nStopped packet capturing safely.")
-            return
+            except (KeyboardInterrupt, EOFError):
+             print("Service Has been terminated")
+             return
+
+        
 
 Info.packetdetector()
