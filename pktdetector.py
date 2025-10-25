@@ -4,7 +4,7 @@ import pyshark
 import datetime
 import pandas as pd
 import os
-inter= 'en1'
+inter= 'eth0'
 capture = pyshark.LiveCapture(interface=inter)
 
 class Statistics():
@@ -21,30 +21,35 @@ class Statistics():
         with open(log_file, 'a') as f:
             f.write(f"{day_of_week},{pkt_time},{src_ip},{dst_ip},{req_port},{syn_flag},{ack_flag}\n")
 
-        Security.PortScanDetect()
-        # Security.DosDetect()
+        # Security.PortScanDetect()
+        Security.DosDetect()
 
 class Security():
     
     @staticmethod
     def DosDetect():
+        
         today = datetime.datetime.today()
         myipaddress = netifaces.ifaddresses('en1')[netifaces.AF_INET][0]['addr']
         df = pd.read_csv('log.csv')
         baseline_weekend=df[df['Day'].isin(['Saturday', 'Sunday'])]
         baseline_weekday=df[df['Day'].isin(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'])]
+        block_file = 'Block.csv'
+        if not os.path.exists(block_file):
+         with open(block_file, 'w') as f:
+            f.write("Source IP\n")
 
         if(today.strftime('%A') in ['Saturday', 'Sunday']):
-            df_http = df[(df['Destination Port']==80) | (df['Destination Port']==3000)]
-            byip = df_http.groupby('Source IP')
-            mean_requests = byip.size().mean()
-            http_requestsperip = df_http.groupby('Source IP').size()
-            for ip, request_count in http_requestsperip.items():
-                if request_count > mean_requests * 3 and ip != myipaddress:
-                    blocklist = pd.read_csv('Block.csv')
-                    if ip not in blocklist['Source IP'].values:
-                        print("DDoS detected from:", ip)
-                        Iptables.block_ip(ip)
+         
+         df_http = df[(df['Destination Port']==80) | (df['Destination Port']==3000)]
+         threshold = 1.5 *  baseline_weekend.groupby('Source IP').size().mean()
+         byip = df_http.groupby('Source IP')
+         mean_requests = byip.size().mean()
+         http_requestsperip = df_http.groupby('Source IP').size()
+         for ip, request_count in http_requestsperip.items():
+            if request_count > threshold and ip != myipaddress:
+                    print("HTTP Flooding from:", ip)
+                    Iptables.block_ip(ip)
 
     @staticmethod
     def PortScanDetect():
