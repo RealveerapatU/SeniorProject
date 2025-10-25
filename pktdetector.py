@@ -40,28 +40,20 @@ class Security():
             f.write("Source IP\n")
 
         if(today.strftime('%A') in ['Saturday', 'Sunday']):
-         
-         df_http = df[(df['Destination Port']==80) | (df['Destination Port']==3000)]
          threshold = 1.5 *  baseline_weekend.groupby('Source IP').size().mean()
-         todayreq=df_http.groupby('Source IP').size()
-         for ip, request_count in todayreq.items():
-            if request_count > threshold and ip != myipaddress:
+         byip=baseline_weekend.groupby('Source IP')
+         for ip, count in byip.size().items():
+            if count > threshold and ip !=myipaddress:
                 dfblock = pd.read_csv(block_file)
                 if ip not in dfblock['Source IP'].values:
-                    print("HTTP Flooding from:", ip)
                     Iptables.block_ip(ip)
-             
+                    print("DoS attack detected from:", ip)
          
-         
-         
-        #  byip = df_http.groupby('Source IP')
-        #  mean_requests = byip.size().mean()
-        #  http_requestsperip = df_http.groupby('Source IP').size()
-        #  for ip, request_count in http_requestsperip.items():
-        #     if request_count > threshold and ip != myipaddress:
-        #             print("HTTP Flooding from:", ip)
-        #             Iptables.block_ip(ip)
+        else:
+            threshold = 1.5 *  baseline_weekday.groupby('Source IP').size().mean()
 
+       
+   
     @staticmethod
     def PortScanDetect():
         myipaddress = netifaces.ifaddresses(inter)[netifaces.AF_INET][0]['addr']
