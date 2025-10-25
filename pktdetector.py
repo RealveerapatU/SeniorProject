@@ -4,7 +4,7 @@ import pyshark
 import datetime
 import pandas as pd
 import os
-inter= 'eth0'
+inter= 'en1'
 capture = pyshark.LiveCapture(interface=inter)
 
 class Statistics():
@@ -30,7 +30,7 @@ class Security():
     def DosDetect():
         
         today = datetime.datetime.today()
-        myipaddress = netifaces.ifaddresses('en1')[netifaces.AF_INET][0]['addr']
+        myipaddress = netifaces.ifaddresses(inter)[netifaces.AF_INET][0]['addr']
         df = pd.read_csv('log.csv')
         baseline_weekend=df[df['Day'].isin(['Saturday', 'Sunday'])]
         baseline_weekday=df[df['Day'].isin(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'])]
@@ -43,13 +43,24 @@ class Security():
          
          df_http = df[(df['Destination Port']==80) | (df['Destination Port']==3000)]
          threshold = 1.5 *  baseline_weekend.groupby('Source IP').size().mean()
-         byip = df_http.groupby('Source IP')
-         mean_requests = byip.size().mean()
-         http_requestsperip = df_http.groupby('Source IP').size()
-         for ip, request_count in http_requestsperip.items():
+         todayreq=df_http.groupby('Source IP').size()
+         for ip, request_count in todayreq.items():
             if request_count > threshold and ip != myipaddress:
+                dfblock = pd.read_csv(block_file)
+                if ip not in dfblock['Source IP'].values:
                     print("HTTP Flooding from:", ip)
                     Iptables.block_ip(ip)
+             
+         
+         
+         
+        #  byip = df_http.groupby('Source IP')
+        #  mean_requests = byip.size().mean()
+        #  http_requestsperip = df_http.groupby('Source IP').size()
+        #  for ip, request_count in http_requestsperip.items():
+        #     if request_count > threshold and ip != myipaddress:
+        #             print("HTTP Flooding from:", ip)
+        #             Iptables.block_ip(ip)
 
     @staticmethod
     def PortScanDetect():
