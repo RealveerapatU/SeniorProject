@@ -4,7 +4,7 @@ import pyshark
 import datetime
 import pandas as pd
 import os
-inter= 'eth0'
+inter= 'en1'
 capture = pyshark.LiveCapture(interface=inter)
 
 class Statistics():
@@ -41,6 +41,7 @@ class Security():
 
         if(today.strftime('%A') in ['Saturday', 'Sunday']):
          threshold = 12 *  baseline_weekend.groupby('Source IP').size().mean()
+         baseline_weekend = df[df['Destination Port'] != 22]
          byip=baseline_weekend.groupby('Source IP')
          for ip, count in byip.size().items():
             if count > threshold and ip !=myipaddress:
