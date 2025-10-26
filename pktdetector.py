@@ -4,7 +4,7 @@ import pyshark
 import datetime
 import pandas as pd
 import os
-inter= 'en1'
+inter= 'eth0'
 capture = pyshark.LiveCapture(interface=inter)
 
 class Statistics():
@@ -40,7 +40,7 @@ class Security():
             f.write("Source IP\n")
 
         if(today.strftime('%A') in ['Saturday', 'Sunday']):
-         threshold = 1.5 *  baseline_weekend.groupby('Source IP').size().mean()
+         threshold = 3 *  baseline_weekend.groupby('Source IP').size().mean()
          byip=baseline_weekend.groupby('Source IP')
          for ip, count in byip.size().items():
             if count > threshold and ip !=myipaddress:
@@ -50,7 +50,14 @@ class Security():
                     print("DoS attack detected from:", ip)
          
         else:
-            threshold = 1.5 *  baseline_weekday.groupby('Source IP').size().mean()
+         threshold = 3 *  baseline_weekday.groupby('Source IP').size().mean()
+         byip=baseline_weekday.groupby('Source IP')
+         for ip, count in byip.size().items():
+            if count > threshold and ip !=myipaddress:
+                dfblock = pd.read_csv(block_file)
+                if ip not in dfblock['Source IP'].values:
+                    Iptables.block_ip(ip)
+                    print("DoS attack detected from:", ip)
 
        
    
