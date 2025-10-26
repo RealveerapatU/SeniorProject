@@ -32,8 +32,8 @@ class Security():
         today = datetime.datetime.today()
         myipaddress = netifaces.ifaddresses(inter)[netifaces.AF_INET][0]['addr']
         df = pd.read_csv('log.csv')
-        baseline_weekend=df[df['Day'].isin(['Saturday', 'Sunday'])]
-        baseline_weekday=df[df['Day'].isin(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'])]
+        baseline_weekend=df[(df['Day'].isin(['Saturday', 'Sunday'])) & (df['Destination Port'] != 22)]
+        baseline_weekday=df[(df['Day'].isin(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'])) & (df['Destination Port'] != 22)]
         block_file = 'Block.csv'
         if not os.path.exists(block_file):
          with open(block_file, 'w') as f:
@@ -41,7 +41,6 @@ class Security():
 
         if(today.strftime('%A') in ['Saturday', 'Sunday']):
          threshold = 12 *  baseline_weekend.groupby('Source IP').size().mean()
-         baseline_weekend = df[df['Destination Port'] != 22]
          byip=baseline_weekend.groupby('Source IP')
          for ip, count in byip.size().items():
             if count > threshold and ip !=myipaddress:
