@@ -95,17 +95,17 @@ class Iptables:
         # os.system(command_input)
         # os.system(command_output)
         log_file = 'Block.csv'
-        dfportblock = pd.read_csv(log_file)
+       
         if not os.path.exists(log_file):
             with open(log_file, 'w') as f:
                 f.write("Source IP\n")
         
+        dfportblock = pd.read_csv(log_file)
         if ip_address not in dfportblock['Source IP'].values:
-            Iptables.block_ip(ip_address)
-            print("Port scanning detected from:", ip_address)
             with open(log_file, 'a') as f:
              f.write(f"{ip_address}\n")
-            print(f"Blocked IP: {ip_address}")
+             print(f"Blocked IP: {ip_address}")
+             
 
     @staticmethod
     def unblock_ip(ip_address):
