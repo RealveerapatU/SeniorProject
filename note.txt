@@ -4,3 +4,7 @@ sudo iptables -D INPUT -s 171.102.216.72 -j DROP
 sudo iptables -L -n
 sudo /home/veerapat/myenv/bin/python3 pktdetector.py
 49.237.201.135 \  49.237.201.135    49.228.88.37  
+
+//ที่ใช้ใน proj
+ #command_input = f"sudo iptables -I INPUT -s {ip_address} -j DROP"
+command_output = f"sudo iptables -I OUTPUT -d {ip_address} -j DROP"
