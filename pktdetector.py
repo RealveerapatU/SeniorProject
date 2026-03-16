@@ -124,7 +124,7 @@ class Iptables:
 class Info:
     @staticmethod
     def packetdetector():
-        print("Host Intruder detection and response system.Select mode to continue \n1.Packet Detector\n2.Unblock IP\n3.Statistics Analysis")
+        print("Host Intruder detection and response system.Select mode to continue \n1.Packet Detector\n2.Unblock IP")
         input_mode = input("Enter mode number: ")
         if(input_mode =='1'):
             try:
@@ -145,6 +145,11 @@ class Info:
                         pass
             except (KeyboardInterrupt, EOFError):
                 print("Service Has been terminated")
-                return
+                return  
+        elif(input_mode =='2'):
+            ip_to_unblock = input("Enter the IP address to unblock: ")
+            Iptables.unblock_ip(ip_to_unblock)
+        else:
+            print("Invalid mode selected.")
 
 Info.packetdetector()
