@@ -4,7 +4,7 @@ import pyshark
 import datetime
 import pandas as pd
 import os
-inter= 'eth0'
+inter= 'ens5'
 capture = pyshark.LiveCapture(interface=inter)
 
 class Statistics():
@@ -21,7 +21,7 @@ class Statistics():
         with open(log_file, 'a') as f:
             f.write(f"{day_of_week},{pkt_time},{src_ip},{dst_ip},{req_port},{syn_flag},{ack_flag}\n")
 
-        # Security.PortScanDetect()
+        Security.PortScanDetect()
         Security.DosDetect()
 
 class Security():
@@ -90,10 +90,10 @@ class Security():
 class Iptables:
     @staticmethod
     def block_ip(ip_address):
-        # command_input = f"sudo iptables -I INPUT -s {ip_address} -j DROP"
-        # command_output = f"sudo iptables -I OUTPUT -d {ip_address} -j DROP"
-        # os.system(command_input)
-        # os.system(command_output)
+        command_input = f"sudo iptables -I INPUT -s {ip_address} -j DROP"
+        command_output = f"sudo iptables -I OUTPUT -d {ip_address} -j DROP"
+        os.system(command_input)
+        os.system(command_output)
         log_file = 'Block.csv'
        
         if not os.path.exists(log_file):
